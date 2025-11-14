@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Asistent | DIV.cz</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #dc2626;
+            --primary-dark: #b91c1c;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --bg-light: #f8fafc;
+            --white: #ffffff;
+            --border-color: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: transparent;
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* CHAT WIDGET STYLES */
+        .chat-widget {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            max-width: 440px;
+            max-height: 750px;
+            z-index: 1000;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .chat-container {
+            position: relative;
+            bottom: auto;
+            right: auto;
+            width: 100%;
+            height: 100%;
+            background: var(--white);
+            border-radius: 1rem;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .chat-avatar {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .chat-header-info h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .chat-header-info p {
+            font-size: 0.875rem;
+            opacity: 0.8;
+            margin: 0;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            background: var(--bg-light);
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-message {
+            align-items: flex-end;
+        }
+
+        .bot-message {
+            align-items: flex-start;
+        }
+
+        .message-bubble {
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            max-width: 80%;
+            line-height: 1.4;
+            font-size: 0.875rem;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .user-message .message-bubble {
+            background: var(--primary-color);
+            color: white;
+            border-bottom-right-radius: 0.25rem;
+        }
+
+        .bot-message .message-bubble {
+            background: var(--white);
+            color: var(--text-dark);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 0.25rem;
+        }
+
+        .bot-message .message-bubble a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .bot-message .message-bubble a:hover {
+            text-decoration: underline;
+        }
+
+        .learned-badge {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .suggestions {
+            padding: 0.75rem;
+            background: var(--white);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .suggestion-chip {
+            background: var(--bg-light);
+            border: 1px solid var(--border-color);
+            color: var(--text-dark);
+            padding: 0.5rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .suggestion-chip:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .chat-input-container {
+            padding: 1rem;
+            background: var(--white);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 0.5rem;
+            align-items: flex-end;
+            flex-shrink: 0;
+        }
+
+        .chat-input-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            outline: none;
+            resize: none;
+            max-height: 100px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+        }
+
+        .chat-controls {
+            display: flex;
+            gap: 0.25rem;
+            margin-top: 0.5rem;
+        }
+
+        .control-btn {
+            background: var(--bg-light);
+            border: 1px solid var(--border-color);
+            color: var(--text-light);
+            width: 32px;
+            height: 32px;
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .control-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .chat-send-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .chat-send-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .typing-indicator {
+            padding: 1rem;
+            background: var(--white);
+            border-radius: 1rem;
+            border: 1px solid var(--border-color);
+            max-width: 80%;
+        }
+
+        .typing-dots {
+            display: inline-block;
+        }
+
+        .typing-dots::after {
+            content: '...';
+            animation: typingDots 1.5s infinite;
+        }
+
+        @keyframes typingDots {
+            0%, 33% { content: '.'; }
+            34%, 66% { content: '..'; }
+            67%, 100% { content: '...'; }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            width: 0%;
+            transition: width 0.8s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-widget">
+        <div class="chat-container active" id="chat-container">
+            <div class="chat-header">
+                <div class="chat-avatar">🎬</div>
+                <div class="chat-header-info">
+                    <h3>AI Asistent</h3>
+                    <p>DIV.cz • Online</p>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chat-messages">
+                <!-- Úvodní zpráva -->
+                <div class="message bot-message">
+                    <div class="message-bubble">
+                        Ahoj! Jsem AI asistent webu DIV.cz. 🎬<br><br>
+                        Můžete se mě ptát na filmy, seriály, knihy, hry, recenze nebo cokoliv jiného z oblasti zábavy. Rád vám pomohu! A ano - učím se z každé konverzace! 🧠
+                    </div>
+                </div>
+            </div>
+
+            <div class="suggestions" id="suggestions">
+                <button class="suggestion-chip" onclick="useSuggestion(this)">Doporuč film</button>
+                <button class="suggestion-chip" onclick="useSuggestion(this)">Nové seriály</button>
+                <button class="suggestion-chip" onclick="useSuggestion(this)">Herní novinky</button>
+            </div>
+
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <textarea
+                        class="chat-input"
+                        id="user-input"
+                        placeholder="Napište svůj dotaz..."
+                        rows="1"
+                    ></textarea>
+                    <div class="chat-controls">
+                        <button class="control-btn" id="voice-btn" title="Hlasové ovládání">🎤</button>
+                        <button class="control-btn" id="image-btn" title="Nahrát obrázek">🖼️</button>
+                        <input type="file" id="image-upload" accept="image/*" style="display: none;">
+                        <button class="control-btn" id="speaker-btn" title="Přečíst odpověď nahlas">🔊</button>
+                    </div>
+                </div>
+                <button class="chat-send-btn" id="send-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CHATBOT CONFIGURATION - ZDE NASTAVTE SVŮJ API KLÍČ
+        const CONFIG = {
+            API_KEY: "", // 👈 ZDE VLOŽTE SVŮJ ANTHROPIC API KLÍČ
+            MODEL: "claude-3-haiku-20240307",
+            API_URL: "https://api.anthropic.com/v1/messages",
+            MAX_TOKENS: 2048,
+            TIMEOUT: 45000
+        };
+
+        // CHAT WIDGET FUNCTIONALITY
+        const chatContainer = document.getElementById('chat-container');
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const suggestionsContainer = document.getElementById('suggestions');
+        const voiceBtn = document.getElementById('voice-btn');
+        const imageBtn = document.getElementById('image-btn');
+        const imageUpload = document.getElementById('image-upload');
+        const speakerBtn = document.getElementById('speaker-btn');
+
+        let conversation = [];
+        let uploadedImage = null;
+        let isRecording = false;
+        let recognition = null;
+        let lastBotMessage = "";
+        let inactivityTimer;
+
+        // KNOWLEDGE BASE FOR DIV.CZ - FILMY, SERIÁLY, KNIHY, HRY
+        const KNOWLEDGE_BASE = {
+            articles: [
+                {
+                    title: "Nejlepší filmy roku 2024",
+                    perex: "Přehled nejlepších filmů, které vyšly v roce 2024 - od akčních blockbusterů po indie dramata.",
+                    url: "https://div.cz/filmy-2024"
+                },
+                {
+                    title: "Seriálové novinky na streamovacích platformách",
+                    perex: "Co nového na Netflixu, HBO Max, Disney+ a dalších streamovacích službách tento měsíc.",
+                    url: "https://div.cz/serialy-streaming"
+                },
+                {
+                    title: "Knihy, které musíte přečíst",
+                    perex: "Výběr nejlepších knih současnosti - od thrillerů po sci-fi a fantasy.",
+                    url: "https://div.cz/knihy-doporuceni"
+                },
+                {
+                    title: "Herní recenze a novinky",
+                    perex: "Nejnovější recenze videoher, trailery a zprávy ze světa gaming industry.",
+                    url: "https://div.cz/herni-novinky"
+                },
+                {
+                    title: "Marvel vs DC: Kdo vede v roce 2024",
+                    perex: "Srovnání filmových vesmírů Marvel a DC a jejich plánů na nadcházející roky.",
+                    url: "https://div.cz/marvel-vs-dc"
+                }
+            ],
+            glossary: [
+                {
+                    term: "Streaming",
+                    definition: "Způsob distribuce audiovizuálního obsahu přes internet v reálném čase, např. Netflix, HBO Max, Disney+."
+                },
+                {
+                    term: "Blockbuster",
+                    definition: "Komerčně velmi úspěšný film s vysokým rozpočtem, který přitáhne velké množství diváků."
+                },
+                {
+                    term: "Indie film",
+                    definition: "Nezávislý film produkovaný mimo hlavní filmová studia, často s uměleckým zaměřením."
+                },
+                {
+                    term: "Open World",
+                    definition: "Herní žánr, kde může hráč volně prozkoumávat rozsáhlý herní svět."
+                }
+            ],
+            categories: [
+                {
+                    title: "Filmy",
+                    use_cases: "Recenze filmů, trailery, rozhovory s herci, filmové novinky a doporučení."
+                },
+                {
+                    title: "Seriály",
+                    use_cases: "Seriálové recenze, sezónní přehledy, epizodní guide, streamovací tipy."
+                },
+                {
+                    title: "Knihy",
+                    use_cases: "Knižní recenze, rozhovory s autory, žánrové přehledy, literární novinky."
+                },
+                {
+                    title: "Hry",
+                    use_cases: "Herní recenze, gameplay videa, novinky ze světa gaming, esport události."
+                }
+            ]
+        };
+
+        // FUNKCE PRO SAMOUČENÍ
+        function loadLearnedData() {
+            try {
+                const saved = localStorage.getItem('div_chat_learned_data');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    if (data && data.interactions) {
+                        return data;
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not load learned data:', e);
+            }
+            
+            return {
+                interactions: [],
+                successful_responses: [],
+                common_questions: [],
+                last_updated: new Date().toISOString()
+            };
+        }
+
+        function saveLearnedData(data) {
+            try {
+                if (data.interactions.length > 1000) {
+                    data.interactions = data.interactions.slice(-1000);
+                }
+                
+                data.last_updated = new Date().toISOString();
+                localStorage.setItem('div_chat_learned_data', JSON.stringify(data));
+            } catch (e) {
+                console.warn('Could not save learned data:', e);
+            }
+        }
+
+        function saveInteractionForLearning(question, answer, context) {
+            const badAnswerSubstrings = [
+                "API endpoint nebyl nalezen", "Omlouvám se, momentálně nemohu odpovědět", "Chyba:",
+                "není nastaven", "neplatný formát", "Dočasně nedostupné",
+                "na tento dotaz nemohu odpovědět", "zatím neznám odpověď", "není správně nakonfigurován"
+            ];
+            
+            if (!answer || answer.trim() === '') {
+                console.log("Skipping learning: Answer is empty.");
+                return;
+            }
+            
+            for (const substring of badAnswerSubstrings) {
+                if (answer.includes(substring)) {
+                    console.log("Skipping learning: Answer contains bad substring");
+                    return;
+                }
+            }
+            
+            if (answer.trim().length < 20) {
+                console.log("Skipping learning: Answer is too short");
+                return;
+            }
+
+            const learnedData = loadLearnedData();
+            const interaction = {
+                question: question,
+                answer: answer,
+                context_used: context,
+                timestamp: Date.now(),
+                usage_count: 1
+            };  
+            
+            let similarFound = false;
+            for (const existing of learnedData.interactions) {
+                const similarity = calculateQuestionSimilarity(question, existing.question || '');
+                if (similarity > 0.7) {
+                    existing.usage_count++;
+                    existing.last_used = Date.now();
+                    similarFound = true;
+                    break;
+                }
+            }
+            
+            if (!similarFound) {
+                learnedData.interactions.push(interaction);
+            }
+            
+            updateCommonQuestions(learnedData, question);
+            saveLearnedData(learnedData);
+        }
+
+        function getLearnedResponse(question, learnedData) {
+            if (!learnedData.interactions || learnedData.interactions.length === 0) {
+                return null;
+            }
+            
+            let bestMatch = null;
+            let bestScore = 0;
+            
+            for (const interaction of learnedData.interactions) {
+                const similarity = calculateQuestionSimilarity(question, interaction.question || '');
+                const score = similarity * (1 + Math.log(1 + (interaction.usage_count || 1)));
+                
+                if (score > bestScore && score > 0.6) {
+                    bestScore = score;
+                    bestMatch = interaction.answer || '';
+                }
+            }
+            
+            return bestMatch;
+        }
+
+        function calculateQuestionSimilarity(q1, q2) {
+            if (!q1 || !q2) return 0;
+            
+            q1 = q1.toLowerCase();
+            q2 = q2.toLowerCase();
+            
+            const words1 = [...new Set(q1.split(' '))];
+            const words2 = [...new Set(q2.split(' '))];
+            
+            const commonWords = words1.filter(word => words2.includes(word));
+            const totalWords = words1.length + words2.length;
+            
+            if (totalWords === 0) return 0;
+            
+            return (2 * commonWords.length) / totalWords;
+        }
+
+        function updateCommonQuestions(learnedData, newQuestion) {
+            let found = false;
+            
+            for (const item of learnedData.common_questions) {
+                if (calculateQuestionSimilarity(item.question || '', newQuestion) > 0.8) {
+                    item.frequency++;
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) {
+                learnedData.common_questions.push({
+                    question: newQuestion,
+                    frequency: 1,
+                    first_seen: Date.now()
+                });
+            }
+            
+            learnedData.common_questions.sort((a, b) => (b.frequency || 0) - (a.frequency || 0));
+            learnedData.common_questions = learnedData.common_questions.slice(0, 20);
+        }
+
+        // POMOCNÉ FUNKCE
+        function buildKnowledgeBase(articles, glossary, categories, relevantContext = "", learnedData = []) {
+            let context = "Zde jsou informace o DIV.cz (filmy, seriály, knihy, hry), ze kterých můžeš čerpat:\n\n";
+            
+            if (relevantContext) {
+                context += "== NEJRELEVANTNĚJŠÍ OBSAH ==\n" + relevantContext + "\n";
+            }
+            
+            if (learnedData.interactions && learnedData.interactions.length > 0) {
+                context += "== NAUČENÉ ODPOVĚDI Z PŘEDCHOZÍCH KONVERZACÍ ==\n";
+                const recentInteractions = learnedData.interactions.slice(-5);
+                for (const interaction of recentInteractions) {
+                    context += "OTÁZKA: " + (interaction.question || '') + "\n";
+                    context += "ODPOVĚĎ: " + (interaction.answer || '') + "\n\n";
+                }
+            }
+            
+            context += "== ČLÁNKY ==\n";
+            for (const item of articles.slice(0, 10)) { 
+                context += "Název: " + (item.title || '') + "\nObsah: " + (item.perex || '') + "\nURL: " + (item.url || '') + "\n\n"; 
+            }
+            
+            context += "== SLOVNÍK POJMŮ ==\n";
+            for (const item of glossary.slice(0, 15)) { 
+                context += "Pojem: " + (item.term || '') + "\nDefinice: " + (item.definition || '') + "\n\n"; 
+            }
+            
+            context += "== KATEGORIE ==\n";
+            for (const item of categories) { 
+                context += "Kategorie: " + (item.title || '') + "\nPopis: " + (item.use_cases || '') + "\n\n"; 
+            }
+            
+            return context;
+        }
+
+        function findRelevantContext(userMessage, articles, glossary, categories) {
+            const keywords = extractKeywords(userMessage);
+            if (keywords.length === 0) return "";
+            
+            let relevantContent = "";
+            
+            for (const article of articles) {
+                const relevance = calculateRelevance(article, keywords);
+                if (relevance > 0.2) {
+                    relevantContent += "ČLÁNEK: " + (article.title || '') + "\n" + 
+                                      "OBSAH: " + (article.perex || '') + "\n" +
+                                      "URL: " + (article.url || '') + "\n\n";
+                }
+            }
+            
+            for (const item of glossary) {
+                const relevance = calculateRelevance(item, keywords, 'term');
+                if (relevance > 0.3) {
+                    relevantContent += "POJEM: " + (item.term || '') + "\n" +
+                                      "DEFINICE: " + (item.definition || '') + "\n\n";
+                }
+            }
+            
+            for (const item of categories) {
+                const relevance = calculateRelevance(item, keywords);
+                if (relevance > 0.2) {
+                    relevantContent += "KATEGORIE: " + (item.title || '') + "\n" +
+                                      "POPIS: " + (item.use_cases || '') + "\n\n";
+                }
+            }
+            
+            return relevantContent;
+        }
+
+        function extractKeywords(text) {
+            if (!text) return [];
+            
+            const stopwords = ['a', 'aby', 'ale', 'asi', 'az', 'bez', 'bude', 'by', 'byt', 'ci', 'co', 'cz', 'dalsi', 'dnes', 'do', 'ho', 'i', 'jako', 'je', 'jeho', 'jeji', 'jejich', 'jen', 'jenž', 'ji', 'jine', 'jiz', 'k', 'kam', 'kde', 'kdo', 'kdy', 'kdyz', 'ke', 'ktera', 'které', 'kteri', 'která', 'který', 'ku', 'ma', 'mate', 'me', 'melo', 'mi', 'mit', 'mne', 'mně', 'muj', 'muze', 'my', 'na', 'nad', 'nam', 'napiste', 'nas', 'naše', 'ne', 'nebo', 'necht', 'nejsou', 'neni', 'nez', 'ní', 'nové', 'o', 'od', 'on', 'pak', 'po', 'pod', 'podle', 'pouze', 'prave', 'pro', 'proc', 'proto', 'protoze', 'prvni', 'pta', 'při', 're', 's', 'se', 'si', 'sice', 'společnosti', 'svych', 'své', 'ta', 'tak', 'take', 'taky', 'te', 'tedy', 'tema', 'teprve', 'ti', 'to', 'tohle', 'toho', 'tohoto', 'tom', 'tomto', 'tomu', 'toto', 'tu', 'tuto', 'tvůj', 'ty', 'tyto', 'u', 'už', 'v', 'vam', 'vas', 'vase', 've', 'vedle', 'vice', 'vsak', 'vám', 'vás', 'z', 'za', 'zda', 'zde', 'ze', 'zpet', 'zpravy', 'i'];
+            
+            const words = text.toLowerCase().split(/\s+/);
+            const keywords = words.filter(word => 
+                word.length > 2 && 
+                !stopwords.includes(word) && 
+                /^[a-ž]+$/u.test(word)
+            );
+            
+            return [...new Set(keywords)];
+        }
+
+        function calculateRelevance(item, keywords, field = 'title') {
+            if (keywords.length === 0) return 0;
+            
+            let text = '';
+            if (field === 'title') {
+                text = ((item.title || '') + ' ' + (item.perex || '') + ' ' + (item.use_cases || '') + ' ' + (item.definition || '')).toLowerCase();
+            } else {
+                text = (item[field] || '').toLowerCase();
+            }
+            
+            let score = 0;
+            for (const keyword of keywords) {
+                if (text.includes(keyword)) {
+                    score += 1;
+                    if ((item.title || '').toLowerCase().includes(keyword)) {
+                        score += 2;
+                    }
+                }
+            }
+            
+            return score / keywords.length;
+        }
+
+        // HLAVNÍ FUNKCE
+        function detectUserIntent(message) {
+            const messageLower = message.toLowerCase();
+
+            const intents = {
+                'greeting': ['ahoj', 'dobrý den', 'čau', 'zdravím', 'cus', 'nazdar', 'hello', 'hi', 'dobré ráno', 'dobrý večer'],
+                'farewell': ['děkuji', 'díky', 'na shledanou', 'měj se', 'bye', 'konec', 'děkuji za pomoc', 'papa'],
+                'help': ['co umíš', 'pomoc', 'nápověda', 'funkce', 'pomůžeš', 'co dokážeš', 'pomoc s'],
+                'movie_question': ['film', 'filmy', 'kino', 'doporuč film', 'recenze film', 'trailer', 'herec', 'herečka', 'režisér'],
+                'series_question': ['seriál', 'seriály', 'díl', 'epizoda', 'sezóna', 'netflix', 'hbo', 'disney', 'streamování'],
+                'book_question': ['kniha', 'knihy', 'čtení', 'autor', 'spisovatel', 'román', 'povídka', 'literatura'],
+                'gaming_question': ['hra', 'hry', 'gaming', 'videohra', 'recenze hry', 'playstation', 'xbox', 'nintendo', 'pc hra'],
+                'recommendation': ['doporuč', 'doporučení', 'co si pustit', 'co číst', 'co hrát', 'tip na'],
+                'article_search': ['článek', 'blog', 'návod', 'tutorial', 'příručka', 'dokumentace', 'najít článek', 'hledat článek'],
+                'technical_question': ['jak funguje', 'co je', 'vysvětli', 'definice', 'význam', 'popis', 'jak na to'],
+                'complaint': ['problém', 'chyba', 'nefunguje', 'špatně', 'nespokojen', 'selhalo', 'nejde', 'nefunguje'],
+                'delete_data': ['vymaž', 'smaž', 'zapomeň', 'reset', 'delete', 'vymažte moji konverzaci', 'vymazat konverzaci']
+            };
+
+            for (const [intent, keywords] of Object.entries(intents)) {
+                for (const keyword of keywords) {
+                    if (messageLower.includes(keyword)) {
+                        return intent;
+                    }
+                }
+            }
+
+            return 'general_query';
+        }
+
+        function analyzeSentiment(message) {
+            if (!message) return 'neutral';
+
+            const positiveWords = [
+                'skvělý', 'super', 'děkuji', 'pomohlo', 'výborně', 'dobrý', 'perfektní',
+                'úžasný', 'díky', 'pěkné', 'vynikající', 'spokojen', 'rád', 'báječný', 'skvěle'
+            ];
+            const negativeWords = [
+                'problém', 'chyba', 'špatně', 'nefunguje', 'nespokojen', 'špatný',
+                'hloupý', 'špatné', 'špatná', 'ne', 'špatně', 'katastrofa', 'hrozný', 'otřesný'
+            ];
+            const positivePatterns = [
+                /děkuji(\s+.*)?/ui, /jsem\s+spokojen/ui, /pomohl(o|a)/ui, /výborně/ui, /skvělé/ui
+            ];
+            const negativePatterns = [
+                /nefunguje/ui, /problém/ui, /nespokojen/ui, /chyba/ui, /katastrofa/ui, /nejde/ui
+            ];
+
+            let positiveCount = 0;
+            let negativeCount = 0;
+
+            const words = message.toLowerCase().split(' ');
+            for (const word of words) {
+                const cleanWord = word.replace(/[^\w]/u, '');
+                if (positiveWords.includes(cleanWord)) positiveCount++;
+                if (negativeWords.includes(cleanWord)) negativeCount++;
+            }
+
+            for (const pattern of positivePatterns) {
+                if (pattern.test(message)) positiveCount += 2;
+            }
+            for (const pattern of negativePatterns) {
+                if (pattern.test(message)) negativeCount += 2;
+            }
+
+            if (positiveCount > negativeCount + 1) return 'positive';
+            if (negativeCount > positiveCount + 1) return 'negative';
+            return 'neutral';
+        }
+
+        function detectLanguage(message) {
+            if(!message || message.trim() === '') return 'cs';
+            
+            const englishIndicators = ['what', 'how', 'why', 'who', 'where', 'when', 'is', 'are', 'am', 'do', 'does', 'did', 'you', 'i', 'me', 'my', 'your', 'please', 'help', 'product', 'price', 'hello', 'hi', 'hey', 'thank', 'goodbye', 'contact', 'about', 'service', 'feature', 'can', 'could', 'should', 'would', 'the', 'a', 'in', 'on', 'at', 'it', 'for', 'with'];
+            const messageLower = message.trim().toLowerCase();
+
+            if (/^[a-zA-Z0-9\s\p{P}]*$/u.test(message)) {
+                let containsIndicator = false;
+                for (const indicator of englishIndicators) {
+                    if (new RegExp('\\b' + indicator + '\\b', 'i').test(messageLower)) {
+                        containsIndicator = true;
+                        break;
+                    }
+                }
+                if (containsIndicator) return 'en';
+            }
+
+            if (/[^\x00-\x7F]/.test(message)) {
+                return 'cs';
+            }
+
+            const words = messageLower.match(/\b[a-zA-Z]{2,}\b/g) || [];
+            if (words.length > 0) {
+                const wordCount = words.length;
+                let englishCount = 0;
+                for (const word of words) {
+                    if (englishIndicators.includes(word)) englishCount++;
+                }
+                if (wordCount > 0 && (englishCount / wordCount > 0.10 || (wordCount <= 6 && englishCount > 0))) return 'en';
+            }
+
+            if (/^\s*(hi|hello|hey|how are|what is|can you|i need|tell me)\b/i.test(message)) return 'en';
+
+            return 'cs';
+        }
+
+        function generateSmartSuggestions(context, conversation) {
+            let suggestions = [];
+
+            switch (context.user_intent) {
+                case 'movie_question':
+                    suggestions = ["Nejlepší filmy 2024", "Akční filmy", "Komedie", "Horory"];
+                    break;
+                case 'series_question':
+                    suggestions = ["Nové na Netflixu", "HBO seriály", "České seriály", "Animované seriály"];
+                    break;
+                case 'book_question':
+                    suggestions = ["Nejprodávanější knihy", "Fantasy", "Thrillery", "Česká literatura"];
+                    break;
+                case 'gaming_question':
+                    suggestions = ["Nejhranější hry", "PS5 novinky", "Xbox hry", "PC hry"];
+                    break;
+                case 'recommendation':
+                    suggestions = ["Doporuč film", "Doporuč seriál", "Doporuč knihu", "Doporuč hru"];
+                    break;
+                default:
+                    suggestions = ["Doporuč film", "Nové seriály", "Herní novinky", "Co číst"];
+            }
+
+            if (context.conversation_depth > 3) {
+                suggestions.push("Potřebuji lidskou podporu");
+                suggestions.push("Hledat na webu");
+            }
+
+            return suggestions.slice(0, 3);
+        }
+
+        async function getSmartAnswer(question, context, history, image = null, sentiment = 'neutral', userIntent = 'general', language = 'cs') {
+            if (!CONFIG.API_KEY) {
+                console.error("CHYBA: API klíč není nastaven!");
+                return "Omlouvám se, momentálně nemohu odpovědět. Administrátor musí nastavit API klíč.";
+            }
+
+            if (!CONFIG.API_KEY.startsWith("sk-ant-")) {
+                console.error("CHYBA: Neplatný formát API klíče");
+                return "Chyba: Nebyl zadán platný API klíč pro Claude.";
+            }
+
+            let historyString = "";
+            for (const entry of history) {
+                const role = (entry.role === 'user') ? "Uživatel" : "Asistent";
+                historyString += role + ": " + entry.text + "\n";
+            }
+
+            const tone = (sentiment === 'positive') ? "přátelský a nadšený" : 
+                        (sentiment === 'negative') ? "empatický a chápavý" : "neutrální";
+
+            let lengthRequirement = "";
+            const lengthMatch = question.match(/(\d+)\s*(znak|znaky|znaků|character|characters)/i);
+            if (lengthMatch) {
+                const requestedLength = parseInt(lengthMatch[1]);
+                lengthRequirement = `**KRITICKÉ: Uživatel požaduje odpověď přesně v ${requestedLength} znacích. Toto je NEJVYŠŠÍ priorita!**\n`;
+            }
+
+            const prompt = `Jsi AI asistent pro web DIV.cz (filmy, seriály, knihy, hry, zábava).\n\n` +
+                          `KONTEXT KONVERZACE:\n` +
+                          `- Nálada uživatele: ${sentiment} (použij ${tone} tón)\n` +
+                          `- Záměr uživatele: ${userIntent}\n` +
+                          `- Hloubka konverzace: ${history.length} zpráv\n` +
+                          `- Zaměření: filmy, seriály, knihy, hry, zábava\n\n` +
+
+                          lengthRequirement +
+
+                          `PRAVIDLA ODPOVÍDÁNÍ:\n` +
+                          `0. **ABSOLUTNĚ KRITICKÉ: Odpověz POUZE v jazyce '${language}'. Nikdy nepřekládej do jiného jazyka.\n` +
+                          `1. POKUD ZPRÁVA OBSAHUJE VÍCE OTÁZEK, ODPOVĚZ NA VŠECHNY (můžeš použít odrážky nebo číslovaný seznam).\n` +
+                          `2. Odpovídej STRUČNĚ (maximálně 2-3 věty, výjimečně 4 pro složitá vysvětlení), POKUD není specificky požadováno jinak.\n` +
+                          `3. Použij poskytnutý kontext z webu DIV.cz pro relevantní odpovědi\n` +
+                          `4. Pokud odpověď vychází z článku nebo uživatel žádá odkaz, VŽDY přidej klikatelný odkaz ve formátu: 'Více: [Název](URL)' nebo 'Článek: [Zde](https://div.cz/clanek)'\n` +
+                          `5. Pro doporučení filmů/seriálů/knih/her používej konkrétní příklady\n` +
+                          `6. Pokud nevíš, raději přiznej neznalost než hádej\n` +
+                          `7. U negativního sentimentu buď obzvlášť empatický\n` +
+                          `8. Můžeš se inspirovat naučenými odpověďmi z předchozích konverzací\n\n` +
+
+                          `HISTORIE KONVERZACE:\n` + historyString + `\n` +
+                          `KONTEXT Z WEBU DIV.CZ:\n--- KONTEXT ---\n` + context + `--- KONEC KONTEXTU ---\n\n` +
+                          `AKTUÁLNÍ OTÁZKA UŽIVATELE:\n` + question + `\n\n` +
+                          `Tvoje odpověď (**POVINNĚ v jazyce '${language}'**):`;
+
+            const content = [
+                {
+                    type: "text",
+                    text: prompt
+                }
+            ];
+
+            if (image) {
+                content.unshift({
+                    type: "image",
+                    source: {
+                        type: "base64",
+                        media_type: "image/jpeg",
+                        data: image
+                    }
+                });
+            }
+
+            const postData = {
+                model: CONFIG.MODEL,
+                max_tokens: CONFIG.MAX_TOKENS,
+                messages: [
+                    {
+                        role: "user",
+                        content: content
+                    }
+                ]
+            };
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), CONFIG.TIMEOUT);
+
+                const response = await fetch(CONFIG.API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': CONFIG.API_KEY,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify(postData),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('API Error:', response.status, errorText);
+                    
+                    if (response.status === 401) {
+                        return language === 'en' ? "Authentication error. Please contact the administrator." : "Chyba ověření. Kontaktujte administrátora.";
+                    }
+                    if (response.status === 404) {
+                        return language === 'en' ? "API service not found. Please try again later." : "API služba nebyla nalezena. Zkuste to prosím později.";
+                    }
+                    if (response.status === 429) {
+                        return language === 'en' ? "Rate limit exceeded. Please try again in a moment." : "Překročen limit požadavků. Zkuste to za chvíli.";
+                    }
+                    if (response.status >= 500) {
+                        return language === 'en' ? "AI service temporarily unavailable. Please try again later." : "Služba AI dočasně nedostupná. Zkuste to prosím později.";
+                    }
+                    
+                    return language === 'en' 
+                        ? `Temporary service issue (Error: ${response.status}). Please try again.`
+                        : `Dočasný problém se službou (Chyba: ${response.status}). Zkuste to prosím znovu.`;
+                }
+
+                const data = await response.json();
+                
+                if (data.content && data.content[0] && data.content[0].text) {
+                    return data.content[0].text;
+                } else {
+                    console.error('Unexpected API response structure:', data);
+                    return "Omlouvám se, na tento dotaz nemohu odpovědět (nečekaná struktura odpovědi).";
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    console.error('Request timeout');
+                    return language === 'en' 
+                        ? "Request timeout. Please try again with a simpler question."
+                        : "Časový limit požadavku. Zkuste to prosím znovu s jednodušší otázkou.";
+                }
+                
+                console.error('Network error:', error);
+                return language === 'en'
+                    ? "Sorry, there was an error connecting to the AI service. Please try again."
+                    : "Omlouvám se, došlo k chybě připojení k AI službě. Zkuste to prosím znovu.";
+            }
+        }
+
+        // UI FUNKCE
+        function useSuggestion(element) {
+            const text = element.textContent;
+            userInput.value = text;
+            sendMessage();
+        }
+
+        // Initialize chat
+        function initChat() {
+            loadConversation();
+            if (conversation.length === 0) {
+                showSuggestions(["Doporuč film", "Nové seriály", "Herní novinky", "Co číst"]);
+            }
+
+            resetInactivityTimer();
+        }
+
+        // Detekce nečinnosti a reset konverzace
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(() => {
+                if (conversation.length > 2) {
+                    const message = "Vidím, že jste přestal/a psát. Pokud potřebujete další pomoc, stačí napsat!";
+                    addBotMessage(message, ["Doporuč film", "Nové seriály", "Herní novinky"]);
+                }
+            }, 300000); // 5 minut nečinnosti
+        }
+
+        // Send message on button click
+        sendBtn.addEventListener('click', sendMessage);
+
+        // Send message on Enter key (but allow Shift+Enter for new line)
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+            resetInactivityTimer();
+        });
+
+        // Auto-resize textarea
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            resetInactivityTimer();
+        });
+
+        // Voice recognition
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            try {
+                recognition = new SpeechRecognition();
+                recognition.lang = 'cs-CZ';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    userInput.value = transcript;
+                    isRecording = false;
+                    voiceBtn.classList.remove('active');
+                    resetInactivityTimer();
+                };
+
+                recognition.onerror = (event) => {
+                    console.error('Speech recognition error:', event.error);
+                    isRecording = false;
+                    voiceBtn.classList.remove('active');
+
+                    if (event.error === 'not-allowed') {
+                        alert('Povolte přístup k mikrofonu v nastavení prohlížeče.');
+                    } else if (event.error === 'no-speech') {
+                        alert('Nebyla zaznamená žádná řeč. Zkuste to znovu.');
+                    } else if (event.error === 'network') {
+                        alert('Problém se sítí. Zkontrolujte připojení k internetu.');
+                    }
+                };
+
+                recognition.onend = () => {
+                    isRecording = false;
+                    voiceBtn.classList.remove('active');
+                };
+            } catch (error) {
+                console.error('Error initializing speech recognition:', error);
+                voiceBtn.style.display = 'none';
+            }
+        } else {
+            voiceBtn.style.display = 'none';
+        }
+
+        voiceBtn.addEventListener('click', () => {
+            if (!recognition) {
+                alert('Váš prohlížeč nepodporuje hlasové ovládání.');
+                return;
+            }
+
+            if (isRecording) {
+                try {
+                    recognition.stop();
+                } catch (error) {
+                    console.error('Error stopping recognition:', error);
+                }
+                isRecording = false;
+                voiceBtn.classList.remove('active');
+            } else {
+                try {
+                    recognition.start();
+                    isRecording = true;
+                    voiceBtn.classList.add('active');
+                } catch (error) {
+                    console.error('Error starting recognition:', error);
+                    alert('Nepodařilo se spustit hlasové ovládání. Zkuste to prosím znovu.');
+                    isRecording = false;
+                    voiceBtn.classList.remove('active');
+                }
+            }
+            resetInactivityTimer();
+        });
+
+        // Image upload
+        imageBtn.addEventListener('click', () => {
+            imageUpload.click();
+            resetInactivityTimer();
+        });
+
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const maxSize = 5 * 1024 * 1024; // 5MB
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Nepodporovaný formát obrázku. Povolené formáty: JPG, PNG, GIF, WebP');
+                    return;
+                }
+
+                if (file.size > maxSize) {
+                    alert('Obrázek je příliš velký. Maximální velikost je 5MB.');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        uploadedImage = event.target.result.split(',')[1];
+                        imageBtn.classList.add('active');
+                        if (userInput.value.trim() === '') {
+                            userInput.value = 'Analyzuj tento obrázek';
+                        }
+                    } catch (error) {
+                        console.error('Error processing image:', error);
+                        alert('Chyba při zpracování obrázku. Zkuste jiný soubor.');
+                        uploadedImage = null;
+                        imageBtn.classList.remove('active');
+                    }
+                };
+                reader.onerror = () => {
+                    alert('Chyba při čtení souboru. Zkuste to prosím znovu.');
+                    uploadedImage = null;
+                    imageBtn.classList.remove('active');
+                };
+                reader.readAsDataURL(file);
+            }
+            resetInactivityTimer();
+        });
+
+        // Text-to-speech
+        speakerBtn.addEventListener('click', () => {
+            if (!lastBotMessage) {
+                alert('Zatím není žádná odpověď k přečtení.');
+                return;
+            }
+
+            if ('speechSynthesis' in window) {
+                if (window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel();
+                    speakerBtn.classList.remove('active');
+                    return;
+                }
+
+                const utterance = new SpeechSynthesisUtterance(lastBotMessage);
+
+                const isEnglish = /^[a-zA-Z0-9\s\p{P}]*$/u.test(lastBotMessage) &&
+                                  /\b(the|is|are|what|how|can|you|your|this|that)\b/i.test(lastBotMessage);
+                utterance.lang = isEnglish ? 'en-US' : 'cs-CZ';
+                utterance.rate = 0.9;
+
+                utterance.onstart = () => {
+                    speakerBtn.classList.add('active');
+                };
+                utterance.onend = () => {
+                    speakerBtn.classList.remove('active');
+                };
+                utterance.onerror = () => {
+                    speakerBtn.classList.remove('active');
+                    window.speechSynthesis.cancel();
+                };
+
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert('Váš prohlížeč nepodporuje text-to-speech.');
+            }
+            resetInactivityTimer();
+        });
+
+        // Message handling
+        async function sendMessage() {
+            const messageText = userInput.value.trim();
+            if (messageText === '' && !uploadedImage) return;
+
+            addUserMessage(messageText || "[Obrázek nahrán]");
+            userInput.value = '';
+            userInput.style.height = 'auto';
+            clearSuggestions();
+            showTypingIndicator();
+
+            const historyForApi = conversation.slice(-4).map(msg => ({
+                role: msg.role,
+                text: msg.text
+            }));
+
+            // Získání naučených dat
+            const learnedData = loadLearnedData();
+            
+            // Detekce záměru a sentimentu
+            const userIntent = detectUserIntent(messageText);
+            const sentiment = analyzeSentiment(messageText);
+            const language = detectLanguage(messageText);
+            
+            // Sestavení kontextu
+            const relevantContext = findRelevantContext(messageText, KNOWLEDGE_BASE.articles, KNOWLEDGE_BASE.glossary, KNOWLEDGE_BASE.categories);
+            const knowledgeBase = buildKnowledgeBase(KNOWLEDGE_BASE.articles, KNOWLEDGE_BASE.glossary, KNOWLEDGE_BASE.categories, relevantContext, learnedData);
+
+            // Nejprve zkusit naučenou odpověď
+            let reply = getLearnedResponse(messageText, learnedData);
+            let usedLearnedData = false;
+
+            if (reply) {
+                usedLearnedData = true;
+                reply = reply + "\n\n*(Odpověď založená na předchozích interakcích)*";
+                hideTypingIndicator();
+                lastBotMessage = reply.replace(/<br>/g, "\n").replace(/<\/?[^>]+(>|$)/g, "");
+                addBotMessage(reply, generateSmartSuggestions({user_intent: userIntent, conversation_depth: conversation.length}, conversation));
+            } else {
+                // Pokud není naučená odpověď, zavolat AI
+                try {
+                    console.log('Sending request to AI...');
+                    reply = await getSmartAnswer(messageText, knowledgeBase, historyForApi, uploadedImage, sentiment, userIntent, language);
+                    
+                    hideTypingIndicator();
+                    
+                    // Uložit interakci pro učení
+                    saveInteractionForLearning(messageText, reply, relevantContext);
+                    
+                    lastBotMessage = reply.replace(/<br>/g, "\n").replace(/<\/?[^>]+(>|$)/g, "");
+                    addBotMessage(reply, generateSmartSuggestions({user_intent: userIntent, conversation_depth: conversation.length}, conversation));
+                } catch (error) {
+                    console.error('Error sending/receiving message:', error);
+                    hideTypingIndicator();
+                    addBotMessage('Omlouvám se, nastala chyba při komunikaci se serverem. Zkuste to prosím znovu.', []);
+                }
+            }
+
+            // Resetovat nahraný obrázek
+            uploadedImage = null;
+            imageBtn.classList.remove('active');
+            imageUpload.value = '';
+
+            resetInactivityTimer();
+        }
+
+        function addUserMessage(text, save = true) {
+            if (save) {
+                conversation.push({ role: 'user', text: text });
+                saveConversation();
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user-message';
+
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.textContent = text;
+
+            messageDiv.appendChild(bubble);
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function addBotMessage(text, suggestions, save = true) {
+            if (save) {
+                conversation.push({
+                    role: 'bot',
+                    text: text,
+                    suggestions: suggestions
+                });
+                saveConversation();
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot-message';
+
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+
+            let processedText = text.replace(/\n/g, '<br>');
+            processedText = processedText.replace(
+                /\[(.*?)\]\((.*?)\)/g,
+                '<a href="$2" target="_blank" style="color: #dc2626; text-decoration: none;">$1</a>'
+            );
+
+            if (text.includes('*(Odpověď založená na předchozích interakcích)*')) {
+                 processedText = processedText.replace('*(Odpověď založená na předchozích interakcích)*', '');
+                 processedText += '<div class="learned-badge">🧠 Naučeno z předchozích konverzací</div>';
+            }
+
+            bubble.innerHTML = processedText;
+            messageDiv.appendChild(bubble);
+            chatMessages.appendChild(messageDiv);
+
+            showSuggestions(suggestions);
+            scrollToBottom();
+        }
+
+        function showSuggestions(suggestions) {
+            clearSuggestions();
+            if (!suggestions || suggestions.length === 0) return;
+
+            suggestions.forEach(text => {
+                const chip = document.createElement('button');
+                chip.className = 'suggestion-chip';
+                chip.textContent = text;
+                chip.onclick = () => useSuggestion(chip);
+                suggestionsContainer.appendChild(chip);
+            });
+        }
+
+        function clearSuggestions() {
+            suggestionsContainer.innerHTML = '';
+        }
+
+        function showTypingIndicator() {
+            if (document.getElementById('typing-indicator')) return;
+
+            const indicator = document.createElement('div');
+            indicator.id = 'typing-indicator';
+            indicator.className = 'message bot-message';
+
+            const bubble = document.createElement('div');
+            bubble.className = 'typing-indicator';
+            bubble.innerHTML = `
+                <div>🎬 AI asistent přemýšlí<span class="typing-dots"></span></div>
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+            `;
+
+            indicator.appendChild(bubble);
+            chatMessages.appendChild(indicator);
+            scrollToBottom();
+
+            setTimeout(() => {
+                const fill = bubble.querySelector('.progress-fill');
+                if (fill) {
+                    fill.style.width = '30%';
+                    setTimeout(() => {
+                        fill.style.width = '70%';
+                    }, 500);
+                }
+            }, 100);
+        }
+
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function saveConversation() {
+            try {
+                sessionStorage.setItem('chatConversation', JSON.stringify(conversation));
+            } catch (e) {
+                console.warn('Could not save conversation to sessionStorage:', e);
+            }
+        }
+
+        function loadConversation() {
+            try {
+                const saved = sessionStorage.getItem('chatConversation');
+                if (saved) {
+                    conversation = JSON.parse(saved);
+                    chatMessages.innerHTML = '';
+
+                    conversation.forEach(msg => {
+                        if (msg.role === 'user') {
+                            addUserMessage(msg.text, false);
+                        } else {
+                            addBotMessage(msg.text, msg.suggestions || [], false);
+                        }
+                    });
+
+                    const lastBotMsg = conversation[conversation.length - 1];
+                    if (lastBotMsg && lastBotMsg.role === 'bot') {
+                        lastBotMessage = lastBotMsg.text.replace(/<br>/g, "\n").replace(/<\/?[^>]+(>|$)/g, "");
+                        if (lastBotMsg.suggestions) {
+                            showSuggestions(lastBotMsg.suggestions);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not load conversation from sessionStorage:', e);
+                conversation = [];
+            }
+        }
+
+        // Initialize chat when page loads
+        document.addEventListener('DOMContentLoaded', initChat);
+    </script>
+</body>
+</html>
